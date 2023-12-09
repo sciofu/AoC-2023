@@ -1,0 +1,13 @@
+[package]
+name = "playground"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "pg"
+path = "src/main.rs"
+
+[dependencies]
+lazy_static = "1.4"
+tokio = { version = "1", features = ["full"] }
+num-integer = "0.1"
