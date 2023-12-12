@@ -21,6 +21,13 @@ impl Rule {
         }
         return None;
     }
+
+    fn find_backwards_destionation(&self, destination: u64) -> Option<u64> {
+        if destination >= self.destination && destination < self.destination + self.count {
+            return Some(self.source + (destination - self.destination));
+        }
+        return None;
+    }
 }
 
 fn parse_category(category: String) -> Vec<Rule> {
@@ -113,6 +120,20 @@ pub fn solve_2() -> io::Result<u64> {
 
     // println!("seeds: {:?}", seeds);
 
+    let seeds_pairs: Vec<(u64, u64)> = seeds[1..]
+        .to_vec()
+        .chunks(2)
+        .filter_map(|chunk| {
+            if let [a, b] = chunk {
+                Some((*a, *b))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    println!("seeds_pairs: {:?}", seeds_pairs);
+
     let mut rules_list: Vec<Vec<Rule>> = Vec::new();
 
     for category in categories[1..].to_vec() {
@@ -123,26 +144,39 @@ pub fn solve_2() -> io::Result<u64> {
 
     let mut lowest_location: u64 = u64::MAX;
 
-    for i in (1..seeds.len()).step_by(2) {
-        for seed in (seeds[i]..(seeds[i + 1] + seeds[i])) {
-            let mut current_location = seed;
-            // println!("seed: {}", seed);
+    let mut loc = 0;
+    loop {
+        let mut current_location = loc;
 
-            for category in rules_list.iter() {
-                for rule in category.iter() {
-                    if let Some(destination) = rule.find_destination(current_location) {
-                        current_location = destination;
-                        break;
-                    }
+        for category in rules_list.iter().rev() {
+            // println!("current_location: {}", current_location);
+            for rule in category.iter() {
+                if let Some(destination) = rule.find_backwards_destionation(current_location) {
+                    current_location = destination;
+                    break;
                 }
             }
-
-            if current_location < lowest_location {
-                println!("lowest_location seed: {}", seed);
-                lowest_location = current_location;
-            }
         }
+
+        if is_seed(&seeds_pairs, current_location) {
+            // println!("found seed: {}", current_location);
+            // println!("lowest_location seed: {}", loc);
+            lowest_location = loc;
+            break;
+        }
+
+        loc += 1;
     }
 
     Ok(lowest_location)
+}
+
+fn is_seed(seeds_pairs: &Vec<(u64, u64)>, seed: u64) -> bool {
+    for seeds_pair in seeds_pairs.iter() {
+        // println!("seeds_pair: {:?}", seeds_pair);
+        if seeds_pair.0 <= seed && seeds_pair.0 + seeds_pair.1 > seed {
+            return true;
+        }
+    }
+    return false;
 }
